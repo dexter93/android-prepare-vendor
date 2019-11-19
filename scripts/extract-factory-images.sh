@@ -33,6 +33,7 @@ cat <<_EOF
       --conf-file   : Device configuration file
       --debugfs     : Use debugfs instead of default ext4fuse
       --fuse-ext2   : Use fuse-ext2 instead of default ext4fuse
+      --fuse2fs     : Use fuse2fs instead of default ext4fuse
 
     INFO:
       * ext4fuse available at 'https://github.com/gerard/ext4fuse'
@@ -116,6 +117,8 @@ mount_linux() {
     mount_cmd="mount -t ext4 -o loop,ro"
   elif [ "$USE_FUSEEXT2" = true ]; then
     mount_cmd="fuse-ext2 -o uid=$EUID,ro"
+  elif [ "$USE_FUSE2FS" = true ]; then
+    mount_cmd="fuse2fs -o uid=$EUID,ro"    
   else
     mount_cmd="ext4fuse -o logfile=/dev/stdout,uid=$EUID,ro"
   fi
@@ -219,6 +222,9 @@ do
     --fuse-ext2)
       USE_FUSEEXT2=true
       ;;
+    --fuse2fs)
+      USE_FUSE2FS=true
+      ;;
     *)
       echo "[-] Invalid argument '$1'"
       usage
@@ -234,6 +240,8 @@ if [ "$EUID" -eq 0 ]; then
 else
   if [ "$USE_FUSEEXT2" = true ]; then
     echo "[*] Using fuse-ext2 for image mounts"
+  elif [ "$USE_FUSE2FS" = true ]; then
+    echo "[*] Using fuse2fs for image mounts"
   elif [ "$USE_DEBUGFS" = true ]; then
     echo "[*] Using debugfs for image mounts"
   else
@@ -248,6 +256,8 @@ elif [ "$USE_DEBUGFS" = true ]; then
   SYS_TOOLS+=("debugfs")
 elif [ "$USE_FUSEEXT2" = true ]; then
   SYS_TOOLS+=("fuse-ext2")
+elif [ "$USE_FUSE2FS" = true ]; then
+  SYS_TOOLS+=("fuse2fs")
 else
   SYS_TOOLS+=("ext4fuse")
   # Platform specific commands
