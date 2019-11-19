@@ -67,6 +67,7 @@ cat <<_EOF
       -y|--yes     : [OPTIONAL] Auto accept Google ToS when downloading Nexus factory images (default: false)
       --debugfs    : [OPTIONAL] Use debugfs (Linux only) instead of the default ext4fuse (default: false)
       --fuse-ext2  : [OPTIONAL] Use fuse-ext2 (Linux only) instead of the default ext4fuse (default: false)
+      --fuse2fs    : [OPTIONAL] Use fuse2fs (Linux only) instead of the default ext4fuse (default: false)
       --force-opt  : [OPTIONAL] Override LOCAL_DEX_PREOPT to always pre-optimize /system bytecode (default: false)
       --oatdump    : [OPTIONAL] Force use of oatdump method to revert pre-optimized bytecode
       --smali      : [OPTIONAL] Force use of smali/baksmali to revert pre-optimized bytecode
@@ -81,7 +82,7 @@ cat <<_EOF
       * Default bytecode de-optimization repair choise is based on most stable/heavily-tested method.
         If you need to change the defaults, you can select manually.
       * Darwin systems can use the ext4fuse to extract data from ext4 images without root
-      * Linux system can use the ext4fuse, fuse-ext2 or debugfs to extract data from ext4 images
+      * Linux system can use the ext4fuse, fuse-ext2, fuse2fs or debugfs to extract data from ext4 images
         without root. If script is run as root, loopback mount is used instead of fuses.
 _EOF
   abort 1
@@ -221,6 +222,16 @@ check_input_args() {
       abort 1
     fi
   fi
+  
+  if [[ "$USE_FUSE2FS" = true && "$USE_FUSEEXT2" = true ]]; then
+    echo "[-] --fuse2fs & --fuse-ext2 cannot be used at the same time"
+    abort 1
+  fi
+  
+  if [[ "$USE_FUSE2FS" = true && "$USE_DEBUGFS" = true ]]; then
+    echo "[-] --fuse2fs &  --debugfs cannot be used at the same time"
+    abort 1
+  fi
 
   if [[ "$USE_DEBUGFS" = true && "$USE_FUSEEXT2" = true ]]; then
     echo "[-] --debugfs & --fuse-ext2 cannot be used at the same time"
@@ -341,6 +352,7 @@ DEODEX_ALL=false
 AOSP_ROOT=""
 USE_DEBUGFS=false
 USE_FUSEEXT2=false
+USE_FUSE2FS=false
 FORCE_VIMG=false
 JAVA_FOUND=false
 TIMESTAMP=""
@@ -397,6 +409,9 @@ do
       ;;
     --fuse-ext2)
       USE_FUSEEXT2=true
+      ;;
+    --fuse2fs)
+      USE_FUSE2FS=true
       ;;
     --force-opt)
       FORCE_PREOPT=true
@@ -588,6 +603,8 @@ EXTRACT_SCRIPT_ARGS=(--input "$factoryImgArchive" --output "$FACTORY_IMGS_DATA")
 
 if [ "$USE_DEBUGFS" = true ]; then
   EXTRACT_SCRIPT_ARGS+=( --debugfs)
+elif [ "$USE_FUSE2FS" = true ]; then
+  EXTRACT_SCRIPT_ARGS+=( --fuse2fs)
 elif [ "$USE_FUSEEXT2" = true ]; then
   EXTRACT_SCRIPT_ARGS+=( --fuse-ext2)
 fi
